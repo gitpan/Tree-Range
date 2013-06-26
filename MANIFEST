@@ -1,0 +1,12 @@
+AUTHORS				Who made this
+lib/Tree/Range/base.pm		The Tree::Range::base class implementation
+lib/Tree/Range/base.pod		The Tree::Range::base class documentation
+lib/Tree/Range/RB.pm		A range tree implemented on top of Tree::RB
+lib/Tree/Range/RB.pod		The Tree::Range::RB class documentation
+Makefile.PL			The build system
+MANIFEST			This file
+t/10-rb.t			Basic tests for the Tree::Range::RB class
+t/20-rb-cmp.t			Tests for Tree::Range::RB using string keys
+t/20-rb-int.t			Tests for Tree::Range::RB using integer keys
+t/20-rb-num.t			Tests for Tree::Range::RB using numeric keys
+META.yml                                 Module meta-data (added by MakeMaker)
