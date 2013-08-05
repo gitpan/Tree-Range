@@ -20,19 +20,16 @@
 
 ### Code:
 
-package Tree::Range::RB;
-
-use base 'Tree::Range::base';
+package Tree::Range::RB 0.21;
 
 use strict;
 
-use vars qw ($VERSION);
-
-$VERSION = "0.1";
-
 require Carp;
+require Tree::Range::base;
 
 use Tree::RB qw (LUGTEQ LULTEQ);
+
+push (our @ISA, qw (Tree::Range::base));
 
 sub backend {
     ## .
@@ -71,6 +68,16 @@ sub lookup_leq {
         = $_[0]->backend ()->lookup ($_[1], LULTEQ ());
     ## .
     $node;
+}
+
+sub min_node {
+    ## .
+    $_[0]->backend ()->min ();
+}
+
+sub max_node {
+    ## .
+    $_[0]->backend ()->max ();
 }
 
 sub put {

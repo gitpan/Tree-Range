@@ -42,6 +42,16 @@ L<Tree::RB>
     ## now @r200 is ("baz", 150, 250)
     my @r300 = $nrt->get_range (300);
     ## now @r300 is (undef, 300, 400)
+    my $free_p = $nrt->range_free_p (200, 300);
+    ## now $free_p is a false value
+    my ($ic)
+        = $nrt->range_iter_closure (450);
+    my @ri1 = $ic->();
+    ## now @ri1 is ("qux", 400, 500)
+    my @ri2 = $ic->();
+    ## now @ri2 is (undef, 500, undef)
+    my @ri3 = $ic->();
+    ## now @ri3 is ()
 
     sub cmp { $_[0] cmp $_[1]; }
     my $srt
@@ -112,16 +122,53 @@ Return the value associated with the range C<$key> lies within.
 In the list context, return also the rangeZ<>E<rsquo>s lower and
 upper bounds.
 
+=item C<< my $free_p = $rat->range_free_p ($lower, $upper) >>
+
+Return a true value if the range specified is either
+unassociated, or associated with the I<leftmost> value
+(as determined by the I<value equality predicate.>)
+Return a false value otherwise.
+
 =item C<< $rat->range_set ($lower, $upper, $value); >>
 
 Associate the keys lying between C<$lower> (inclusive) and
 C<$upper> (exclusive) with C<$value>.
 
-Raise an exception (S<i. e.,> I<die.>) unless the upper bound is
+Raise an exception (S<i. e.,> I<die>) unless the upper bound is
 greater than the lower one, as determined by the I<comparison>
 function.
 
 All the overlapping range associations, if any, are overwritten.
+(But see also the L<Tree::Range::RB::Conflict> documentation.)
+
+=item C<< $rat->range_set_over ($lower, $upper, $value); >>
+
+This method is defined in L<Tree::Range::base> as an alias to
+C<range_set>.
+
+=item C<< my $ic = $rat->range_iter_closure (); >>
+
+=item C<< my $ic = $rat->range_iter_closure ($key); >>
+
+=item C<< my $ic = $rat->range_iter_closure ($key, $descending_p); >>
+
+=item C<< while ((my ($v, $lower, $upper) = $ic->())) { E<hellip> } >>
+
+=item C<< while ((my $v = $ic->())) { E<hellip> } >>
+
+Return a I<range iterator closure.>
+
+If C<$descending_p> is given and true, the closure will return
+ranges so that the respective keys are in descending order
+(as defined by the I<comparison> function.)
+The ascending order will be used otherwise.
+
+The first range returned by the closure will be the one
+containing the key specified, if any,
+or the first range of the tree for the order chosen.
+
+Either way, the first range will be determined at the time of
+the first call to the iterator closure.
 
 =back
 
@@ -148,6 +195,10 @@ time, or the respective defaults.
 
 =item C<< $rat->put ($key, $value) >>
 
+=item C<< my $node = $rat->min_node ($key) >>
+
+=item C<< my $node = $rat->max_node ($key) >>
+
 =item C<< my $node = $rat->lookup_leq ($key) >>
 
 =item C<< my $node = $rat->lookup_geq ($key) >>
@@ -155,6 +206,8 @@ time, or the respective defaults.
 =item C<< my $okay = $put->delete ($key) >>
 
 Associate a (key, value) pair with the value of C<$key>,
+return the I<node> object
+having the minimum or the maximum key in the tree,
 perform a less-than-or-equal or greater-than-or-equal lookup
 (returning a I<node> object),
 or remove any such association, respectively.
@@ -163,7 +216,7 @@ The C<delete> method will return a true value upon
 successful completion.
 
 These methods are mapped to the
-C<put>, C<lookup> and C<delete>
+C<put>, C<min>, C<max>, C<lookup> and C<delete>
 methods
 of the underlying L<Tree::RB> object.
 
@@ -174,8 +227,7 @@ of the underlying L<Tree::RB> object.
 L<Tree::Interval>,
 L<Tree::RB>,
 L<Tree::Range::base>
-
-L<Scalar::Util>
+L<Tree::Range::RB::Conflict>
 
 =head1 AUTHOR
 

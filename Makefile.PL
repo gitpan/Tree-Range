@@ -15,12 +15,25 @@ WriteMakefile (
     LICENSE => "bsd",
     ## FIXME: just don't know how portable this code is
     MIN_PERL_VERSION => 5.010,
+    META_MERGE => {
+        "meta-spec" => {
+            "version"   => 2
+        },
+        "resources" => {
+            repository => {
+                type    => 'git',
+                url     => 'http://am-1.org/~ivan/archives/git/tree-range-2013.git/',
+                web     => 'http://am-1.org/~ivan/archives/git/gitweb.cgi?p=tree-range-2013.git',
+            }
+        }
+    },
     ## FIXME: Tree::RB is only useful for Tree::Range::RB
     PREREQ_PM => {
-        "Carp"      => 1.26,
+        "Carp"      => 1.20,
         "Tree::RB"  => 0.500003
     },
     TEST_REQUIRES => {
+        "Test::Fatal"   => 0.010,
         "Test::More"    => 0.98
     }
 );

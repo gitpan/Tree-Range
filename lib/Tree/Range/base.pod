@@ -28,12 +28,15 @@ implementations
 =head1 SYNOPSIS
 
   package Tree::Range::Foo;
-  use base 'Tree::Range::base';
 
   require Tree::Foo;
+  require Tree::Range::base;
+
+  push (our @ISA, qw (Tree::Range::base));
 
   ## Define cmp_fn, value_equal_p_fn, leftmost_value,
-  ## lookup_leq, lookup_geq, put, delete here
+  ## lookup_leq, lookup_geq, min_node, max_node,
+  ## put, and delete here
 
 =head1 DESCRIPTION
 
@@ -46,9 +49,12 @@ non-overlapping subsets (I<ranges>) of an ordered (as defined by
 the I<comparison> function) set, to arbitrary values.
 
 Specifically, this class provides implementations of the
-C<get_range> and C<range_set> methods on top of the
+C<get_range>, C<range_free_p>, C<range_iter_closure>,
+and C<range_set> methods
+on top of the
 C<cmp_fn>, C<value_equal_p_fn>, C<leftmost_value>,
-C<lookup_leq>, C<lookup_geq>, C<put>, and C<delete> ones.
+C<lookup_leq>, C<lookup_geq>, C<min_node>, C<max_node>,
+C<put>, and C<delete> ones.
 
 In the terms of the underlying tree object, the value is
 associated with the range extending from the lower (leftmost)
@@ -83,7 +89,7 @@ Return the I<value equality predicate.>
 A possible value is
 C<< sub { $_[0] eq $_[1]; } >>,
 assuming that the values dealt with will all be either simple
-strings, objects, or C<undef>.
+strings, references (including objects), or C<undef>.
 
 See the C<range_set> method description for more information.
 
@@ -125,6 +131,17 @@ respectively, or C<undef>.
 
 =back
 
+=item C<< my $node = $rat->min_node ($key) >>
+
+=item C<< my $node = $rat->max_node ($key) >>
+
+Return the tree node objects associated with the minimum and
+maximum keys currently in the tree.
+
+This base class uses these methods solely in the
+C<range_iter_closure> methodE<rsquo>s implementation,
+when no explicit key to start iteration from is given.
+
 =item C<< $rat->put ($key, $value) >>
 
 =item C<< my $okay = $put->delete ($key) >>
@@ -137,7 +154,7 @@ successful completion.
 
 =back
 
-The following two methods are those which are implemented by
+The following methods are the only actually implemented by
 this base class.
 
 =over 4
@@ -160,16 +177,26 @@ value will be returned.)
 The caller should accept the values to be either omitted or
 C<undef> under the conditions stated above.
 
+=item C<< my $free_p = $rat->range_free_p ($lower, $upper) >>
+
+Return a true value if the range specified is either
+unassociated, or associated with the I<leftmost> value
+(as determined by the I<value equality predicate.>)
+Return a false value otherwise.
+
 =item C<< $rat->range_set ($lower, $upper, $value); >>
 
 Associate the keys lying between C<$lower> (inclusive) and
 C<$upper> (exclusive) with C<$value>.
 
-Raise an exception (S<i. e.>, I<die>.) unless the upper bound is
+Raise an exception (S<i. e.>, I<die>) unless the upper bound is
 greater than the lower one, as determined by the I<comparison>
 function.
 
 All the overlapping range associations, if any, are overwritten.
+(But see also
+the C<range_set_over> method description below, and also
+the L<Tree::Range::conflict> documentation.)
 Consider, S<e. g.:>
 
     ## assuming numeric (<=>) comparison function
@@ -188,11 +215,16 @@ Thus:
     my @r = $rat->get_range (200);
     ## now @r is ("baz", 150, 250)
 
-Associating the I<leftmost> value with a range can be though of
+Associating the I<leftmost> value with a range can be thought of
 as E<ldquo>deletingZ<>E<rdquo> such a range.
 
 In addition to the ranges being automatically split as
-necessary, the adjacent ones could also be merged, so that:
+necessary, the adjacent ones will also be merged,
+should it be possible to prove that the overall key to value
+mapping
+(taking the I<value equality predicate> used into account)
+is preserved by the change.
+Consider, S<e. g.:>
 
     ## assuming numeric (<=>) comparison function
     my @a = ("foo");
@@ -203,7 +235,7 @@ necessary, the adjacent ones could also be merged, so that:
     ## now @r is (\@a, 100, 300)
 
 Such optimization is performed whenever the values of the
-adjacent ranges satisfy any of the following conditions:
+adjacent ranges satisfy either of the following conditions:
 
 =over 4
 
@@ -222,10 +254,55 @@ returns true for the pair.
 
 =back
 
+=item C<< $rat->range_set_over ($lower, $upper, $value); >>
+
+This class defines the C<range_set_over> method as an alias to
+C<range_set>.  The latter, however, is overridden by the
+L<Tree::Range::conflict> class, so that it fails instead of
+writing over the ranges associated with a value other than the
+I<leftmost> one (as determined by the C<range_free_p> method),
+while this method remains unaltered and available.
+
+See L<Tree::Range::conflict> for more information.
+
+=item C<< my $ic = $rat->range_iter_closure (); >>
+
+=item C<< my $ic = $rat->range_iter_closure ($key); >>
+
+=item C<< my $ic = $rat->range_iter_closure ($key, $descending_p); >>
+
+=item C<< while ((my ($v, $lower, $upper) = $ic->())) { E<hellip> } >>
+
+=item C<< while ((my $v = $ic->())) { E<hellip> } >>
+
+Return a I<range iterator closure.>
+
+If C<$descending_p> is given and true, the closure will return
+ranges so that the respective keys are in descending order
+(as defined by the I<comparison> function.)
+The ascending order will be used otherwise.
+
+The first range returned by the closure will be the one
+containing the key specified, if any,
+or the first range of the tree for the order chosen.
+
+Either way, the first range will be determined at the time of
+the first call to the iterator closure.
+
+B<Note> that the behavior of the closure is undefined if the
+tree is modified while the iteration is in progress.
+It is safe, however, to modify the tree before the closure is
+called for the first time.
+
+Also to note is that the closure returns only the associated
+value in scalar context, thus matching the behavior of
+the C<get_range> method.
+
 =back
 
 =head1 SEE ALSO
 
+L<Tree::Range::conflict>,
 L<Tree::Range::RB>
 
 L<Scalar::Util>

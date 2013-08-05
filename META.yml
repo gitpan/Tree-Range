@@ -1,24 +1,26 @@
---- #YAML:1.0
-name:               Tree-Range
-version:            0.1
-abstract:           Map values belonging to non-overlapping ranges using a tree
+---
+abstract: 'Map values belonging to non-overlapping ranges using a tree'
 author:
-    - Ivan Shmakov <oneingray@gmail.com>
-license:            bsd
-distribution_type:  module
-configure_requires:
-    ExtUtils::MakeMaker:  0
+  - 'Ivan Shmakov <oneingray@gmail.com>'
 build_requires:
-    ExtUtils::MakeMaker:  0
-requires:
-    Carp:      1.26
-    perl:      5.01
-    Tree::RB:  0.500003
-no_index:
-    directory:
-        - t
-        - inc
-generated_by:       ExtUtils::MakeMaker version 6.57_05
+  ExtUtils::MakeMaker: 0
+  Test::Fatal: 0.01
+  Test::More: 0.98
+dynamic_config: 1
+generated_by: 'ExtUtils::MakeMaker version 6.72, CPAN::Meta::Converter version 2.120351'
+license: bsd
 meta-spec:
-    url:      http://module-build.sourceforge.net/META-spec-v1.4.html
-    version:  1.4
+  url: http://module-build.sourceforge.net/META-spec-v1.4.html
+  version: 1.4
+name: Tree-Range
+no_index:
+  directory:
+    - t
+    - inc
+requires:
+  Carp: 1.2
+  Tree::RB: 0.500003
+  perl: 5.01
+resources:
+  repository: http://am-1.org/~ivan/archives/git/tree-range-2013.git/
+version: 0.21

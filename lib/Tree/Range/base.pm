@@ -20,13 +20,9 @@
 
 ### Code:
 
-package Tree::Range::base;
+package Tree::Range::base 0.21;
 
 use strict;
-
-use vars qw ($VERSION);
-
-$VERSION = "0.1";
 
 require Carp;
 
@@ -46,13 +42,17 @@ sub del_range {
     my ($obj, $left, $cmp, $high) = @_;
     my ($last_ref, @delk);
     for (my $e = $left;
-         (defined ($e) && &$cmp ($e->key (), $high) <= 0);
+         defined ($e);
          $e = $e->successor ()) {
+        my $c
+            = &$cmp ($e->key (), $high);
+        last
+            if ($c >  0);
         # print STDERR ("-g: ", scalar (Data::Dump::dump ({ $e->key () => $e->val () })), "\n");
         $last_ref
             = [ $e->key, $e->val () ];
         last
-            if (&$cmp ($e->key (), $high) >= 0);
+            if ($c >= 0);
         ## FIXME: shouldn't there be a better way?
         push (@delk, $e->key ());
     }
@@ -90,6 +90,154 @@ sub get_range {
     return (defined ($right)
             ? ($v, $l_k, $right->key ())
             : ($v, $l_k));
+}
+
+sub range_free_p {
+    my ($self, $lower, $upper) = @_;
+    my $cmp
+        = $self->cmp_fn ();
+    Carp::croak ("Upper bound (", $upper,
+                 ") must be greater than the lower (", $lower,
+                 ") one")
+        unless (&$cmp ($upper, $lower) > 0);
+
+    my $right
+        = $self->lookup_leq ($upper);
+    ## .
+    return    1
+        unless (defined ($right));
+    ## FIXME: a crude ->lookup_lt ()
+    $right
+        = $right->predecessor ()
+        if ($cmp->($upper, $right->key ()) == 0);
+    ## .
+    return    1
+        unless (defined ($right));
+
+    my ($r, $lm, $eq_u)
+        = ($right->val (),
+           $self->leftmost_value (),
+           $self->value_equal_p_fn ());
+    ## .
+    return (! 1)
+        unless (safe_eq   ($r, $lm)
+                || $eq_u->($r, $lm));
+
+    ## by now, we know that $upper is mapped to $lm
+    ## check if $lower is covered by the same range
+    ## .
+    return ($cmp->($right->key (), $lower) <= 0);
+}
+
+sub prepare_range_iter_asc {
+    my ($self, $fn_ref, $may_be_key) = @_;
+
+    my $cur;
+    my $fn = sub {
+        ## .
+        return
+            unless (defined ($cur));
+        my $next
+            = $cur->successor ();
+        my @r
+            = (wantarray ()
+               ? ($cur->val (), $cur->key (),
+                  (defined ($next) ? ($next->key ()) : ()))
+               : ($cur->val ()));
+        $cur
+            = $next;
+        ## .
+        @r;
+    };
+
+    if (defined ($may_be_key)) {
+        ($$fn_ref, $cur)
+            = ($fn, $self->lookup_leq ($may_be_key));
+        ## .
+        return $fn->();
+    } else {
+        my $n
+            = $self->min_node ();
+        ($$fn_ref, $cur)
+            = ($fn, $n);
+        ## .
+        return (wantarray ()
+                ? ($self->leftmost_value (),
+                   undef,
+                   (defined ($n) ? ($n->key ()) : ()))
+                :  $self->leftmost_value ());
+    }
+}
+
+sub prepare_range_iter_dsc {
+    my ($self, $fn_ref, $may_be_key) = @_;
+
+    my $cur;
+    my $fn = sub {
+        ## .
+        return
+            unless (defined ($cur));
+        my $prev
+            = $cur->predecessor ();
+        my @r
+            = (wantarray ()
+               ? ((defined ($prev)
+                   ? ($prev->val (),  $prev->key ())
+                   : ($self->leftmost_value (), undef)),
+                  $cur->key ())
+               : (defined ($prev)
+                  ? $prev->val ()
+                  : $self->leftmost_value ()));
+        $cur
+            = $prev;
+        ## .
+        @r;
+    };
+
+    if (defined ($may_be_key)) {
+        my $n
+            = $self->lookup_geq ($may_be_key);
+        ## FIXME: a crude ->lookup_gt ()
+        $n
+            = $n->successor ()
+            if (defined ($n)
+                && ($self->cmp_fn ()->($may_be_key,
+                                       $n->key ()) == 0));
+        ($$fn_ref, $cur)
+            = ($fn, $n);
+        ## .
+        return $fn->();
+    } else {
+        my $n
+            = $self->max_node ();
+        ($$fn_ref, $cur)
+            = ($fn, $n);
+        ## .
+        return (wantarray ()
+                ? (defined ($n)
+                   ? ($n->val (), $n->key ())
+                   : ($self->leftmost_value ()))
+                : (defined ($n)
+                   ?  $n->val ()
+                   :  $self->leftmost_value ()));
+    }
+}
+
+sub range_iter_closure {
+    my ($self, $may_be_key, $may_be_reverse_p) = @_;
+
+    my $fn
+        = undef;
+
+    ## .
+    sub {
+        ## .
+        return (defined ($fn)
+                ? $fn->()
+                : ($may_be_reverse_p
+                   ? $self->prepare_range_iter_dsc (\$fn, $may_be_key)
+                   : $self->prepare_range_iter_asc (\$fn, $may_be_key)));
+    }
 }
 
 sub range_set {
@@ -151,6 +299,9 @@ sub range_set {
 
     ## .
 }
+
+*range_set_over
+    = \&range_set;
 
 1;
 
