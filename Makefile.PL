@@ -30,6 +30,7 @@ WriteMakefile (
     ## FIXME: Tree::RB is only useful for Tree::Range::RB
     PREREQ_PM => {
         "Carp"      => 1.20,
+        "Scalar::Util"  => 1.27,
         "Tree::RB"  => 0.500003
     },
     TEST_REQUIRES => {

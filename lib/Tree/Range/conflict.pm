@@ -13,10 +13,12 @@
 
 ### Code:
 
-package Tree::Range::conflict 0.21;
+package Tree::Range::conflict;
 
 use mro;
 use strict;
+
+our $VERSION = 0.22;
 
 require Carp;
 

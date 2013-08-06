@@ -13,9 +13,11 @@
 
 ### Code:
 
-package Tree::Range 0.21;
+package Tree::Range;
 
 use strict;
+
+our $VERSION = 0.22;
 
 sub new {
     my ($class, $variety, @args) = @_;

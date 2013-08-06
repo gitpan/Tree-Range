@@ -13,9 +13,11 @@
 
 ### Code:
 
-package Tree::Range::RB::Conflict 0.21;
+package Tree::Range::RB::Conflict;
 
 use strict;
+
+our $VERSION = 0.22;
 
 require Tree::Range::conflict;
 require Tree::Range::RB;

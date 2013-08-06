@@ -20,9 +20,11 @@
 
 ### Code:
 
-package Tree::Range::RB 0.21;
+package Tree::Range::RB;
 
 use strict;
+
+our $VERSION = 0.22;
 
 require Carp;
 require Tree::Range::base;

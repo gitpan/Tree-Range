@@ -1,5 +1,10 @@
 Changes — The history of the Tree-Range releases  -*- Changes -*-
 
+0.22  2013-08-06
+
+      – Reverted back to the explicit ‘$VERSION’ assignment (were: using
+        a two-argument ‘package’ form.)
+
 0.21  2013-08-05
 
       – New ‘Tree::Range::conflict’ and ‘Tree::Range::RB::Conflict’
